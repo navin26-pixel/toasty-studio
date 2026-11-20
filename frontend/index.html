@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Toasty Studio</title>
+</head>
+<body>
+  <main id="home" hidden>
+    <h1>Toasty Studio</h1>
+    <p>Start a meeting and send the link.</p>
+    <input id="homeName" placeholder="Your name" maxlength="40" autocomplete="name" />
+    <button id="create" class="primary">Start meeting</button>
+    <p id="homeError" class="error" role="alert"></p>
+  </main>
+
+  <main id="lobby" hidden>
+    <h1>Join meeting</h1>
+    <video id="preview" autoplay muted playsinline></video>
+    <input id="lobbyName" placeholder="Your name" maxlength="40" autocomplete="name" />
+    <button id="join" class="primary">Join</button>
+    <p id="lobbyError" class="error" role="alert"></p>
+  </main>
+
+  <section id="room" hidden>
+    <div id="status" role="status"></div>
+    <div id="grid"></div>
+    <nav id="controls">
+      <button id="mic">Mute</button>
+      <button id="cam">Stop video</button>
+      <button id="share">Share screen</button>
+      <button id="copy">Copy link</button>
+      <button id="leave" class="danger">Leave</button>
+    </nav>
+  </section>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
