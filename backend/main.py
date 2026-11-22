@@ -1,110 +1,81 @@
-"""Toasty Studio signaling server.
+"""Toasty Studio server: routes and wiring only.
 
-Media flows peer to peer (WebRTC). This server only creates rooms and relays
-connection messages between the people in a room. Rooms live in memory.
+rooms.py: who is connected now   host.py: host-only actions   signaling.py: the WebSocket
+store.py: saved records          config.py: settings
+Run from the project folder:  uvicorn backend.main:app --port 8000
 """
-import json
-import os
+import asyncio
 import secrets
-import uuid
-from pathlib import Path
+from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-MAX_PEERS = int(os.getenv("MAX_PEERS", "4"))  # full mesh: keep small
-DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
-
-app = FastAPI(title="Toasty Studio")
-rooms: dict[str, dict] = {}  # room_id -> {"host_token": str, "peers": {peer_id: {...}}}
+from . import config, rooms, signaling, store
 
 
-def ice_servers() -> list[dict]:
-    servers: list[dict] = [{"urls": "stun:stun.l.google.com:19302"}]
-    turn = os.getenv("TURN_URL")  # comma separated, e.g. turn:host:3478,turns:host:5349
-    if turn:
-        servers.append({
-            "urls": [u.strip() for u in turn.split(",")],
-            "username": os.getenv("TURN_USERNAME", ""),
-            "credential": os.getenv("TURN_CREDENTIAL", ""),
-        })
-    return servers
+@asynccontextmanager
+async def lifespan(_app):
+    async def periodic_backup():
+        while True:
+            await asyncio.sleep(config.BACKUP_EVERY_SECONDS)
+            await asyncio.to_thread(store.backup)
+    task = asyncio.create_task(periodic_backup())
+    yield
+    task.cancel()
+
+
+app = FastAPI(title="Toasty Studio", lifespan=lifespan)
+store.init()
 
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "rooms": len(rooms)}
+    return {"ok": True, "rooms": len(rooms.rooms)}
 
 
 @app.get("/api/config")
-def config():
-    return {"iceServers": ice_servers(), "maxPeers": MAX_PEERS}
+def get_config():
+    return {"iceServers": config.ice_servers(), "maxPeers": config.MAX_PEERS}
 
 
 @app.post("/api/rooms")
 def create_room():
     room_id = secrets.token_urlsafe(6).replace("_", "x").replace("-", "y")
     host_token = secrets.token_urlsafe(16)
-    rooms[room_id] = {"host_token": host_token, "peers": {}}
+    store.create_meeting(room_id, host_token)
+    rooms.create_room(room_id)
     return {"roomId": room_id, "hostToken": host_token}
 
 
 @app.get("/api/rooms/{room_id}")
 def room_info(room_id: str):
-    room = rooms.get(room_id)
+    room = rooms.get_room(room_id)
     if not room:
         return JSONResponse({"error": "Meeting not found."}, status_code=404)
-    return {"roomId": room_id, "peers": len(room["peers"])}
+    if room.ended:
+        return JSONResponse({"error": "This meeting has ended."}, status_code=410)
+    return {"roomId": room_id, "peers": len(room.peers)}
 
 
-async def broadcast(room: dict, message: dict, skip: str | None = None):
-    for pid, p in list(room["peers"].items()):
-        if pid != skip:
-            try:
-                await p["ws"].send_json(message)
-            except Exception:
-                pass
+@app.get("/api/rooms/{room_id}/report")
+def room_report(room_id: str, token: str = ""):
+    if not store.is_host(room_id, token):
+        return JSONResponse({"error": "Only the host can view the report."}, status_code=403)
+    return store.report(room_id)
 
 
 @app.websocket("/ws/{room_id}")
-async def ws_room(ws: WebSocket, room_id: str, name: str = "Guest", token: str = ""):
-    room = rooms.get(room_id)
-    await ws.accept()
-    if not room:
-        await ws.close(code=4404, reason="Meeting not found.")
-        return
-    if len(room["peers"]) >= MAX_PEERS:
-        await ws.close(code=4409, reason="Meeting is full.")
-        return
-
-    peer_id = uuid.uuid4().hex[:8]
-    role = "host" if token and secrets.compare_digest(token, room["host_token"]) else "guest"
-    me = {"id": peer_id, "name": name.strip()[:40] or "Guest", "role": role, "ws": ws}
-    others = [{k: p[k] for k in ("id", "name", "role")} for p in room["peers"].values()]
-    room["peers"][peer_id] = me
-
-    await ws.send_json({"type": "welcome", "id": peer_id, "role": role, "peers": others})
-    await broadcast(room, {"type": "peer-joined", "peer": {"id": peer_id, "name": me["name"], "role": role}}, skip=peer_id)
-
-    try:
-        while True:
-            msg = json.loads(await ws.receive_text())
-            if msg.get("type") == "signal":
-                target = room["peers"].get(msg.get("to"))
-                if target:
-                    await target["ws"].send_json({"type": "signal", "from": peer_id, "data": msg.get("data")})
-    except (WebSocketDisconnect, json.JSONDecodeError, RuntimeError):
-        pass
-    finally:
-        room["peers"].pop(peer_id, None)
-        await broadcast(room, {"type": "peer-left", "id": peer_id})
+async def ws_room(ws: WebSocket, room_id: str, name: str = "Guest", token: str = "", cid: str = ""):
+    await signaling.room_socket(ws, room_id, name, token, cid)
 
 
-if DIST.exists():
-    app.mount("/assets", StaticFiles(directory=DIST / "assets"), name="assets")
+if config.DIST.exists():
+    app.mount("/assets", StaticFiles(directory=config.DIST / "assets"), name="assets")
 
     @app.get("/{path:path}")
     def spa(path: str):
-        f = DIST / path
-        return FileResponse(f if path and f.is_file() else DIST / "index.html")
+        f = (config.DIST / path).resolve()
+        inside = config.DIST.resolve() in f.parents
+        return FileResponse(f if path and inside and f.is_file() else config.DIST / "index.html")
