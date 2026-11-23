@@ -1,0 +1,14 @@
+/* Design tokens. Change a colour or size here and the whole app follows. */
+:root {
+  --bg: #090909;        /* main background */
+  --bg-2: #181818;      /* bars and side panels */
+  --panel: #242424;     /* cards and buttons */
+  --line: #454545;      /* borders and separators */
+  --text: #ffffff;
+  --muted: #a0a0a0;
+  --danger: #dc2626;    /* destructive actions and muted mic */
+  --radius: 10px;
+  --control: 44px;      /* height of every control button */
+  --gap: 0.75rem;
+  --font: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
