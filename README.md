@@ -1,47 +1,129 @@
 # Toasty Studio
 
-A small browser meeting app. Python (FastAPI) handles rooms and connection signaling. TypeScript (Vite) is the web app. Video and audio go directly between browsers (WebRTC).
+A modular, browser-based meeting application prototype built for small-group conversations, focus groups and collaborative sessions.
 
-What works: start a meeting, share a link, host and guest join, mic and camera toggles, screen share, leave and rejoin, up to 4 people.
+**Tech stack:** Python, FastAPI, TypeScript, Vite, WebRTC and SQLite.
 
-## Run it on your laptop
+The application uses WebRTC for real-time audio and video communication between participants. The backend handles room management, signaling and application data.
 
-Needs Node 20+ and Python 3.10+.
+## Features
+
+- Create and join meetings using a shared link.
+- Host and guest participant roles.
+- Configured capacity of up to 6 participants.
+- Microphone and camera controls.
+- Screen sharing.
+- WebSocket-based signaling.
+- SQLite-based application data and activity logging.
+- Meeting attendance and speaker activity records.
+
+> This is an independent prototype. It is not yet integrated into the main Toasty Media ecosystem or intended as a replacement for the existing Toasty Studio implementation.
+
+## Architecture
+
+The project is organized into separate backend and frontend modules.
+
+### Backend: Python / FastAPI
+
+| File | Responsibility |
+|---|---|
+| `backend/config.py` | Application configuration and ICE server settings |
+| `backend/rooms.py` | Room state and participant management |
+| `backend/signaling.py` | WebSocket connections and WebRTC signaling |
+| `backend/host.py` | Host-related operations and permissions |
+| `backend/store.py` | SQLite persistence and data operations |
+| `backend/main.py` | FastAPI application, routes and server initialization |
+
+### Frontend: TypeScript / Vite
+
+| Directory / File | Responsibility |
+|---|---|
+| `frontend/src/main.ts` | Application entry point |
+| `frontend/src/services/` | API communication and WebSocket management |
+| `frontend/src/media/` | Media controls and speaking detection |
+| `frontend/src/participants/` | Participant interface |
+| `frontend/src/host/` | Host-related interface and reporting |
+| `frontend/src/meeting/` | Meeting workflow and WebRTC coordination |
+| `frontend/src/styles/` | Application styling and design system |
+
+## How It Works
+
+1. A participant creates or joins a meeting.
+2. The backend manages the room and participant connections.
+3. WebSocket signaling coordinates WebRTC connections.
+4. Audio and video are exchanged between browsers.
+5. Application data and activity records can be stored in SQLite.
+
+## Run Locally
+
+### Requirements
+
+- Node.js 20+
+- Python 3.10+
+
+### 1. Build the frontend
 
 ```bash
-# 1. Build the web app
-cd frontend && npm install && npm run build && cd ..
-
-# 2. Start the server
-python3 -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install -r backend/requirements.txt
-uvicorn backend.main:app --port 8000
+cd frontend
+npm install
+npm run build
+cd ..
 ```
 
-Open http://localhost:8000, enter your name, press Start meeting. Open the link in a second browser window to test with yourself.
+### 2. Create a Python environment
 
-For live editing of the UI, run `uvicorn backend.main:app --port 8000` in one terminal and `cd frontend && npm run dev` in another, then use http://localhost:5173.
+```bash
+python -m venv .venv
+```
 
-## Meet Ricardo
+Activate it:
 
-Browsers only allow camera and microphone on https (or localhost), so Ricardo cannot open a plain http link from your laptop. Pick one:
+**Windows PowerShell**
+```powershell
+.venv\Scripts\Activate.ps1
+```
 
-1. **Quick test, today:** keep the server running and, in a second terminal, run `cloudflared tunnel --url http://localhost:8000` (free, install from cloudflare.com). It prints an https address. Open it yourself, start the meeting, send Ricardo the meeting link.
-2. **Hosted:** deploy this folder with its Dockerfile to Render, Railway or Fly.io. They give you an https address and the app runs without your laptop. Keep one instance only, because rooms live in memory.
+**macOS / Linux**
+```bash
+source .venv/bin/activate
+```
 
-## If video does not connect
+### 3. Install backend dependencies
 
-Some networks block direct connections. Add a TURN relay by setting these environment variables on the server: `TURN_URL` (for example `turn:your.host:3478`), `TURN_USERNAME`, `TURN_CREDENTIAL`. Free and paid TURN services exist (Metered, Cloudflare Calls, or your own coturn).
+```bash
+pip install -r backend/requirements.txt
+```
 
-## Project layout
+### 4. Start the server
 
-- `backend/main.py`: rooms, WebSocket signaling, serves the built web app
-- `frontend/src/main.ts`: lobby, meeting, WebRTC, controls
-- `frontend/src/style.css`: styles
+```bash
+uvicorn backend.main:app --host 0.0.0.0 --port 8000
+```
 
-## Known limits
+Open:
 
-- Rooms are in memory. Restarting the server ends all meetings.
-- Meeting links are open: anyone with the link can join. The host is whoever created the room in that browser.
-- Full mesh video, so quality drops past 4 people. Larger meetings need an SFU such as LiveKit.
-- No recording, captions or notes yet. Those are the next milestones.
+`http://localhost:8000`
+
+## Project Status
+
+This is an actively developed prototype.
+
+Current priorities include:
+
+- Improving meeting reliability.
+- Testing participant capacity and connection stability.
+- Improving persistence of meeting and session data.
+- Validating participant permissions and host controls.
+- Improving speaker activity attribution.
+- Exploring integration with the wider Toasty ecosystem.
+
+## Future Direction
+
+The longer-term goal is to explore how Studio sessions can connect with shared Toasty infrastructure, including:
+
+- Shared participant identity.
+- Session and participation records.
+- Profiles and contribution history.
+- Peeps and other Toasty products.
+
+These integrations are future architectural goals, not completed functionality.
