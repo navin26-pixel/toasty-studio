@@ -1,5 +1,7 @@
+import "@fontsource-variable/inter";
 import "./styles/theme.css";
 import "./styles/app.css";
+import "./styles/components.css";
 import { checkMeeting, createMeeting, getConfig, hostTokenKey, type Config } from "./services/api";
 import { startMeeting } from "./meeting/meeting";
 

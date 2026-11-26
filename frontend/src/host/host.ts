@@ -1,12 +1,18 @@
 import { getReport } from "../services/api";
-import type { HostActions } from "../participants/panel";
+import { confirmDialog } from "../ui/dialog";
 
-/** Host requests. The server checks the sender's role on every one, so these only ask. */
-export function hostActions(send: (m: object) => void): HostActions & { end(): void } {
+export function hostActions(send: (m: object) => void) {
   return {
-    remove: (target) => { if (confirm("Remove this person from the meeting?")) send({ type: "host", action: "remove", target }); },
-    mute: (target) => send({ type: "host", action: "mute", target }),
-    allowShare: (target, value) => send({ type: "host", action: "allow-share", target, value }),
+    remove: (target: string, name: string) => {
+      void confirmDialog({
+        title: `Remove ${name}?`,
+        message: "They will be disconnected from this meeting.",
+        confirmLabel: "Remove",
+        danger: true,
+      }).then((ok) => { if (ok) send({ type: "host", action: "remove", target }); });
+    },
+    mute: (target: string) => send({ type: "host", action: "mute", target }),
+    allowShare: (target: string, value: boolean) => send({ type: "host", action: "allow-share", target, value }),
     end: () => send({ type: "host", action: "end" }),
   };
 }
@@ -19,7 +25,6 @@ export async function askLeave(): Promise<"leave" | "end" | "cancel"> {
   return dialog.returnValue as "leave" | "end" | "cancel";
 }
 
-/** Shows who spoke and who attended. Returns false when the server refuses (not the host). */
 export async function showReport(roomId: string): Promise<boolean> {
   const data = await getReport(roomId);
   if (!data) return false;
@@ -29,6 +34,7 @@ export async function showReport(roomId: string): Promise<boolean> {
   for (const s of data.speakers) lines.push(`${s.name}: ${mmss(s.speakingMs)}, ${s.turns} turns`);
   lines.push("", "Who was in the meeting");
   for (const p of data.participants) lines.push(`${p.name} (${p.role}): joined ${at(p.joinedAt)}, left ${at(p.leftAt)}`);
+
   document.getElementById("reportBody")!.textContent = lines.join("\n");
   document.getElementById("reportDownload")!.onclick = () => {
     const a = document.createElement("a");
