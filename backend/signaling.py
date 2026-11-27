@@ -61,7 +61,7 @@ async def room_socket(ws: WebSocket, room_id: str, name: str, token: str, cid: s
                 continue
             if not isinstance(msg, dict):
                 continue
-            
+
             if msg.get("type") == "pong":
                 continue # Just a heartbeat reply, ignore.
 

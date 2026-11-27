@@ -29,14 +29,14 @@ export class MeetingSocket {
 
   connect() {
     this.cleanupTimers();
-    
+
     const enc = encodeURIComponent;
     const token = localStorage.getItem(hostTokenKey(this.roomId)) ?? "";
-    
+
     // Force WSS on HTTPS pages (fixes Cloudflare tunnel drops)
     const protocol = location.protocol === "https:" ? "wss:" : "ws:";
     const wsUrl = `${protocol}//${location.host}/ws/${this.roomId}?name=${enc(this.name)}&token=${enc(token)}&cid=${enc(browserId())}`;
-    
+
     const ws = new WebSocket(wsUrl);
     this.ws = ws;
 
@@ -48,7 +48,7 @@ export class MeetingSocket {
     ws.onmessage = (e) => {
       let m: any;
       try { m = JSON.parse(e.data); } catch { return; }
-      
+
       // Reply to server heartbeat to keep Cloudflare tunnel alive
       if (m.type === "ping") {
         this.send({ type: "pong" });
@@ -62,9 +62,9 @@ export class MeetingSocket {
     ws.onclose = (e) => {
       if (this.stopped) return;
       if (FINAL_CLOSE_CODES.has(e.code)) return this.onStatus("closed", e.reason);
-      
+
       this.retry++;
-      
+
       // Wait 2 seconds before showing "Reconnecting..." to the user.
       // If it reconnects faster than 2 seconds, they never see the error!
       this.statusTimer = window.setTimeout(() => {
