@@ -1,0 +1,54 @@
+:root {
+  color-scheme: dark;
+
+  /* Dark surfaces always carry bright text. Bright surfaces always carry black text. */
+  --bg: #000000;
+  --bg-2: #0a0a0a;
+  --panel: #111111;
+  --surface-2: #171717;
+  --surface-3: #212121;
+  --line: #4a4a4a;
+  --line-soft: #262626;
+
+  --text: #ffffff;
+  --text-2: #ececec;
+  --muted: #b4b4b4;
+  --on-light: #000000;
+
+  --brand: #e5252a;
+  --brand-2: #f2600c;
+  --danger: #ff5a5a;
+  --danger-bg: #e5252a;
+  --danger-strong: #c01d22;
+  --danger-soft: rgba(229, 37, 42, 0.16);
+  --success: #3ddc84;
+  --moxie-a: #6366f1;
+  --moxie-b: #a855f7;
+
+  --font: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.8125rem;
+  --fs-md: 0.9375rem;
+  --fs-lg: 1.125rem;
+  --fs-xl: 1.5rem;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --ls-tight: -0.02em;
+  --ls-wide: 0.05em;
+
+  --gap: 0.75rem;
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+  --shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.7);
+
+  --control: 44px;
+  --control-sm: 32px;
+  --dock-w: 22rem;
+
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --t-fast: 120ms;
+  --t: 200ms;
+}

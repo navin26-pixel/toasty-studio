@@ -1,0 +1,127 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Toasty Media</title>
+</head>
+<body>
+  <main id="home" hidden>
+    <div class="brand-block">
+      <svg class="brand-logo" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="#e5252a"/><text x="16" y="22" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="700" font-size="18" fill="#fff">T</text></svg>
+      <strong>Toasty Media</strong>
+    </div>
+    <h1>Start a meeting</h1>
+    <p class="muted">Enter your name and create a room. Share the link with your guests.</p>
+    <input id="homeName" placeholder="Your name" maxlength="40" autocomplete="name" />
+    <button id="create" class="ctl primary">Start meeting</button>
+    <p id="homeError" class="error" role="alert"></p>
+  </main>
+
+  <main id="lobby" hidden>
+    <div class="brand-block">
+      <svg class="brand-logo" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="#e5252a"/><text x="16" y="22" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="700" font-size="18" fill="#fff">T</text></svg>
+      <strong>Toasty Media</strong>
+    </div>
+    <h1>Join meeting</h1>
+    <video id="preview" autoplay muted playsinline></video>
+    <input id="lobbyName" placeholder="Your name" maxlength="40" autocomplete="name" />
+    <div class="lobby-actions">
+      <button id="join" class="ctl primary" disabled>Join Meeting</button>
+      <button id="cancel" class="ctl">Cancel</button>
+    </div>
+    <p id="lobbyError" class="error" role="alert"></p>
+  </main>
+
+  <section id="room" hidden>
+    <header id="bar">
+      <div class="bar-left">
+        <div class="brand-block brand-block--compact">
+          <svg class="brand-logo" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="#e5252a"/><text x="16" y="22" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="700" font-size="18" fill="#fff">T</text></svg>
+          <strong>Toasty Media</strong>
+        </div>
+        <span class="bar-sep" aria-hidden="true"></span>
+        <span id="conn" data-state="connecting">Connecting</span>
+        <span id="status" role="status"></span>
+      </div>
+      <div class="bar-right">
+        <div id="viewSlot"></div>
+        <span id="roleChip" class="role-chip" hidden></span>
+        <button id="inviteBtn" type="button" class="icon-btn" aria-label="Invite people" title="Invite people" hidden>
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M19 8v6M16 11h6"/></svg>
+        </button>
+        <button id="settingsBtn" type="button" class="icon-btn" aria-label="Audio and video settings" title="Audio and video settings">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>
+        </button>
+        <button id="helpBtn" type="button" class="icon-btn" aria-label="Help" title="Help">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7M12 17h.01"/></svg>
+        </button>
+      </div>
+    </header>
+    <div id="stage">
+      <div id="grid"></div>
+      <aside id="panel" class="dock" hidden></aside>
+      <aside id="moxie" class="dock" hidden aria-label="Moxie AI"></aside>
+    </div>
+    <nav id="controls" aria-label="Meeting controls"></nav>
+  </section>
+
+  <section id="ended" hidden>
+    <div class="brand-block">
+      <svg class="brand-logo" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="#e5252a"/><text x="16" y="22" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="700" font-size="18" fill="#fff">T</text></svg>
+      <strong>Toasty Media</strong>
+    </div>
+    <h1>Meeting closed</h1>
+    <p id="endedText" class="muted"></p>
+    <a class="ctl primary" href="/">Back to start</a>
+  </section>
+
+  <dialog id="leaveDialog">
+    <form method="dialog">
+      <h2>Leave meeting?</h2>
+      <p class="muted">You are the host. Leave and the meeting keeps running, or end it for everyone.</p>
+      <div class="actions">
+        <button value="cancel" class="ctl">Cancel</button>
+        <button value="leave" class="ctl">Leave meeting</button>
+        <button value="end" class="ctl danger">End for everyone</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="reportDialog">
+    <pre id="reportBody"></pre>
+    <form method="dialog" class="actions">
+      <button type="button" id="reportDownload" class="ctl">Download JSON</button>
+      <button class="ctl">Close</button>
+    </form>
+  </dialog>
+
+  <dialog id="inviteDialog" class="invite">
+    <form method="dialog">
+      <h2>Invite people</h2>
+      <p class="muted">Anyone with this link can open the lobby and join this meeting. Each meeting has its own link.</p>
+      <div class="invite-row">
+        <input id="inviteLink" readonly aria-label="Meeting link" />
+        <button type="button" id="inviteCopy" class="ctl primary">Copy link</button>
+      </div>
+      <div class="actions"><button class="ctl">Done</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="helpDialog" class="invite">
+    <form method="dialog">
+      <h2>Help</h2>
+      <dl class="help-list">
+        <dt>Inviting</dt><dd>Use the add-person icon to copy the meeting link. Guests open it, enter a name and join.</dd>
+        <dt>Roles</dt><dd>The host leads the meeting and controls who is in it. Producers get the production tools. Guests manage their own camera and microphone.</dd>
+        <dt>Host / Producer view</dt><dd>This only changes which tools you see. It never changes what you are allowed to do.</dd>
+        <dt>Chat</dt><dd>Chat reaches people who are in the meeting right now. It is not saved.</dd>
+        <dt>Notes</dt><dd>Notes, agenda and moments are private and saved only in this browser.</dd>
+      </dl>
+      <div class="actions"><button class="ctl">Close</button></div>
+    </form>
+  </dialog>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
